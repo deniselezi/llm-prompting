@@ -2,7 +2,10 @@ import json
 import time
 from cohere import Client
 
-API_KEY = ""
+with open("key.txt", "r", encoding='utf-8') as keyfile:
+    key = keyfile.readline()
+
+API_KEY = key
 
 with open('data/asc/laptop/test.json', 'r', encoding='utf-8') as file:
     json_data = json.load(file)
@@ -26,7 +29,7 @@ def create_prompt(sentence, aspect, mode):
         ]
         shots = [f"Example sentence: [{s}]. Example object: [{o}]. Correct example response: [{r}]. " for s, o, r in examples]
         assert(len(shots) == 3)  # 3-shot
-        prompt = f"{task_description}. Here is the sentence: [{sentence}]. Here is the object: [{aspect}]. " + shots[0] + shots[1] + shots[2] + shots[3]
+        prompt = f"{task_description}. Here is the sentence: [{sentence}]. Here is the object: [{aspect}]. " + shots[0] + shots[1] + shots[2]
     return prompt
 
 def run(data, mode):
@@ -49,7 +52,7 @@ def run(data, mode):
         print(response)
         
         # Rate limiting: Sleep for 1.5 seconds to not exceed 40 calls per minute
-        time.sleep(1.5)
+        # time.sleep(1.5)
     
     with open(f'asc_results_{mode}.json', 'w', encoding='utf-8') as outfile:
         json.dump(results, outfile, indent=4)
