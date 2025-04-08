@@ -9,7 +9,7 @@ with open("key.txt", "r", encoding='utf-8') as keyfile:
 
 API_KEY = key
 
-with open('data/ae/laptop/test.json', 'r', encoding='utf-8') as file:
+with open('data/ae/rest/test.json', 'r', encoding='utf-8') as file:
     json_data = json.load(file)
 
 client = Client(api_key=API_KEY)
@@ -76,14 +76,14 @@ def create_prompt(sentence, mode):
     if mode=="zero-shot":
         prompt = f"{task_description}. Here is your sentence: [{sentence}]. Identify the terms."
     elif mode=="one-shot":
-        example_sentence = "Keyboard is great but primary and secondary control buttons could be more durable ."
-        example_response = "keyboard,secondary control"
+        example_sentence = "The filet mignon dish was superb !"
+        example_response = "filet mignon dish"
         prompt = f"{task_description}. Here's an example sentence: [{example_sentence}]. Here are the terms of the sentence: {example_response}. Here is your sentence: [{sentence}]. Identify the terms."
     else:  # few shot
         examples = [
-            ("Keyboard is great but primary and secondary control buttons could be more durable .", "keyboard,secondary control"),
-            ("I bought this laptop about a month ago to replace my compaq laptop .", "No terms were found."),
-            ("So what am I supposed to do ? The LG service center can not provide me the `` service `` when it is called the `` service center `` .", "LG service center,service center"),
+            ("The filet mignon dish was superb !", "filet mignon dish"),
+            ("Stepping into Casa La Femme last night was a true experience unlike any other in New York !", "Casa La Femme"),
+            ("We were fast to order the appetizer platter since we were very hungry .", "No terms were found."),
         ]
         shots = [f"Here's an example sentence: [{s}]. Here are the terms of the sentence: {r}. " for s, r in examples]
         assert(len(shots) == 3)  # 3-shot
@@ -93,12 +93,15 @@ def create_prompt(sentence, mode):
 
 def run(data, mode):
     def label_tokens(tokens, terms, labels):
+        # print(tokens, terms, labels)
         if len(terms) == 1 and terms[0] == "":  # no terms were fonud
             return labels
         substrings_split = [[word.lower() for word in s.split()] for s in terms]
 
         for substring in substrings_split:
             sub_len = len(substring)
+            if sub_len == 0:
+                continue
             for i in range(len(tokens) - sub_len + 1):
                 if tokens[i:i + sub_len] == substring:
                     labels[i] = 'B'
@@ -112,9 +115,10 @@ def run(data, mode):
         tokens = item["sentence"]
         sentence = ' '.join(tokens)
         label = item["label"]
+        # print(sentence)
+        # print(tokens)
         # print(label)
         label = ' '.join(label)
-        # print(sentence)
         # print(tokens)
         prompt = create_prompt(sentence, mode)
         terms = client.v2.chat(
@@ -125,6 +129,7 @@ def run(data, mode):
         ).message.content[0].text
         if terms[-1] == ".":  # .
             terms = terms[:-1]
+        # print(terms)
         if 'no terms were found' in terms.lower():
             terms = ""
         terms = terms.split(',')
@@ -148,5 +153,5 @@ def run(data, mode):
     pass
 
 # run(json_data, mode='zero-shot')
-# run(json_data, mode='one-shot')
+run(json_data, mode='one-shot')
 run(json_data, mode='few-shot')

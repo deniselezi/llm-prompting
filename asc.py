@@ -7,7 +7,7 @@ with open("key.txt", "r", encoding='utf-8') as keyfile:
 
 API_KEY = key
 
-with open('data/asc/laptop/test.json', 'r', encoding='utf-8') as file:
+with open('data/asc/rest/test.json', 'r', encoding='utf-8') as file:
     json_data = json.load(file)
 
 client = Client(api_key=API_KEY)
@@ -19,13 +19,15 @@ def create_prompt(sentence, aspect, mode):
     if mode=="zero-shot":
         prompt = f"{task_description}. Here is the sentence: [{sentence}]. Here is the object: [{aspect}]"
     elif mode=="one-shot":
-        example_sentence = "The speed gives you the power to work on these projects seamlessly, and multiple at a time if you sowish."
-        example_object = "speed"
+        example_sentence = "The service is excellent and always informative without an air."
+        example_object = "service"
         example_response = "positive"
         prompt = f"{task_description}. Here is the sentence: [{sentence}]. Here is the object: [{aspect}]. Example sentence: [{example_sentence}]. Example object: [{example_object}]. Correct example response: [{example_response}]."
     else:  # few shot
         examples = [
-            ("The speed gives you the power to work on these projects seamlessly, and multiple at a time if you sowish.", "speed", "positive"), ("I do not experience a lot of heat coming out of it, however I would highly suggest purchasing a stand however, due to the nature of the design of the macbook as it is one very large heat sink.", "stand", "neutral"), ("You won't have to spend gobs of money on some inefficient virus program that needs to be updated every month and that constantly drains your wallet.", "virus program", "negative")
+            ("The service is excellent and always informative without an air.", "service", "positive"),
+            ("Perfectly al dente pasta, not drowned in sauce -- generous portions.", "sauce", "neutral"),
+            ("Finally let into the store 5 at a time, to buy expensive slices from a harried staff.", "slices", "negative")
         ]
         shots = [f"Example sentence: [{s}]. Example object: [{o}]. Correct example response: [{r}]. " for s, o, r in examples]
         assert(len(shots) == 3)  # 3-shot
@@ -36,9 +38,12 @@ def run(data, mode):
     results = {}
     for question_id in data:
         item = data[question_id]
-        print(item)
+        # print(item)
         sentence = item["sentence"]
         aspect = item["term"]
+        # print(sentence)
+        # print(aspect)
+        # print(item['polarity'])
         # question_id = item["id"]
         prompt = create_prompt(sentence, aspect, mode)
         response = client.v2.chat(
